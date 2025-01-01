@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const { stringify } = require('querystring');
 // const router = express.Router()
 // const Income = require('../src/Incomepage');
 
@@ -182,34 +183,39 @@ app.get('/api/expenses/filter', async (req, res) => {
 
 
 // Budget Schema
-const budgetSchema = new mongoose.Schema({
-  name: String,
-  amount: Number,
-});
-const Budget = mongoose.model('Budget', budgetSchema);
-
-
-// Fetch budgets from the database
+// GET /api/budgets route
 app.get('/api/budgets', async (req, res) => {
+  // const email = req.query;
   try {
-    const budgets = await Budget.find();
-    res.json({ budgets });
+    const budgets = await Budget.find(); // Fetch all budgets from MongoDB
+    res.json({ budgets }); // Return the budgets in JSON format
   } catch (error) {
     res.status(500).json({ error: 'Error fetching budgets' });
   }
 });
-// Add a new budget to the database
+
+const budgetSchema = new mongoose.Schema({
+  name: String,
+  amount: Number,
+  spent: { type: Number, default: 0 }
+  // email:{type :String , required:true}
+});
+const Budget = mongoose.model('Budget', budgetSchema);
 app.post('/api/budgets', async (req, res) => {
   try {
-    const { name, amount } = req.body;
+    const { name, amount, spent } = req.body;
 
     // Validate input
-    if (!name || !amount) {
-      return res.status(400).json({ error: 'Name and amount are required' });
+    if (!name || !amount || !spent) {
+      return res.status(400).json({ error: 'Name and amount and spent are required' });
     }
 
-    // Create a new budget document
-    const newBudget = new Budget({ name, amount });
+    // Create a new budget document with spent
+    const newBudget = new Budget({
+      name,
+      amount,
+      spent: spent || 0, // Default to 0 if not provided
+    });
 
     // Save the budget to the database
     await newBudget.save();
@@ -220,6 +226,40 @@ app.post('/api/budgets', async (req, res) => {
     res.status(500).json({ error: 'Error creating budget' });
   }
 });
+
+
+// // Fetch budgets from the database
+// app.get('/api/budgets', async (req, res) => {
+//   try {
+//     const budgets = await Budget.find();
+//     res.json({ budgets });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error fetching budgets' });
+//   }
+// });
+// // Add a new budget to the database
+// app.post('/api/budgets', async (req, res) => {
+//   try {
+//     const { name, amount } = req.body;
+
+//     // Validate input
+//     if (!name || !amount) {
+//       return res.status(400).json({ error: 'Name and amount are required' });
+//     }
+
+//     // Create a new budget document
+//     const newBudget = new Budget({ name, amount });
+
+//     // Save the budget to the database
+//     await newBudget.save();
+
+//     // Send success response
+//     res.status(201).json({ message: 'Budget created successfully', budget: newBudget });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error creating budget' });
+//   }
+// });
+
 
 
 
